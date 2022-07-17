@@ -1,100 +1,151 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define key(A) (A)
-#define less(A,B) (key(A) < key(B))
-#define exch(A,B) {int t=A; A=B; B=t;}
-#define cmpexch(A,B) {if(less(B,A)) exch(A,B);}
+//macros
 
-int separa(int *v,int e,int d)
-{
-    int aux = v[d], i, j = e;
+#define key(A) (A.cargo)
+#define less(A, B) (A.voto == B.voto ? key(A) > key(B) : A.voto > B.voto) // comparar se a quantidade de voto for igual, pelo cargo em si
+#define exch(A, B)  {politico t = B; B = A; A = t;}
+#define cmpexch(A, B) {if (less(B, A)) exch(A, B)}
 
-    
-    for(i = e; i < d; i++)
-        if(less(v[i], aux))
-        {
-          exch(v[i], v[j]);
-          j++;
-        }
-    exch(v[j], v[d]);
-    return j;
-}
 
-void quicksort(int *v,int e, int d)
-{
-    if (d <= e) return;//caso base
+//struct dados politicos
 
-    //calculoda mediana
-    cmpexch(v[(e+d)/2], v[d]);
-    cmpexch(v[e], v[(e+d)/2]);
-    cmpexch(v[d], v[(e+d)/2]);
+typedef struct politico{
+    int cargo;
+    int voto;
+} politico;
 
-    int j = separa(v, e, d);
-    quicksort(v, e, j-1);
-    quicksort(v, j+1, d);
-}
+//globais
 
-void maiorRepeticao(int *v, int n) {
-    int i, repDef = 0, d = 0, repAux, a = 1;
+politico pres[91], sen[901], fed[9001], est[90001];
+int quantPres = 0, quantSen = 0, quantDepFed = 0, quantDepEst = 0;
 
-    repAux = v[0];
-    for(i = 1; i < n; i ++) {
-        if(repAux != v[i]) {
-            if(a > d) {
-                repDef = repAux;
-                d = a;
-            }
-            a = 0;
-            repAux = v[i];
-        }
-        else if(i == n - 1 && repAux == v[i]) {
-            if(a > d) {
-                repDef = repAux;
-                d = a;
-            }
-        }
-        else
-            a ++;
-    }
+//funcoes assinadas
 
-    printf("%d\n", repDef);
-}
+int separa(politico *lista, int l, int r);
+void quicksort(politico *lista, int l, int r);
+
+//main
 
 int main()
 {
-    int s, df, de, *v = malloc(10000000 * sizeof(int)), i = 0, vv = 0, vi = 0, *vp = malloc(10000000 * sizeof(int)), *vs = malloc(10000000 * sizeof(int)), *vdf = malloc(10000000 * sizeof(int)), *vde = malloc(10000000 * sizeof(int)), j = 0, k = 0, u = 0, n = 0;
+    long long senadores, depFederais, depEstaduais,i;
+    scanf(" %lld %lld %lld", &senadores, &depFederais, &depEstaduais);
 
-    scanf(" %d %d %d", &s, &df, &de);
+    int valido = 0, invalidoo = 0, totalVotos = 0, votoLido, l;
 
-    while(scanf(" %d", &v[i++]) != EOF) {
-        if(v[i-1] < 0)
-            vi ++;
-        else
-            vv ++;
-    }
+    while (scanf(" %d%n", &votoLido, &l) != EOF){ //le numero do candidato depEstaduais captura o quantidade de numeros digitados para diferenciar o tipo de voto(%n)
 
-    printf("%d %d\n", vv, vi);
-
-    quicksort(v, 0, vv + vi - 1);
-
-    for(i = 0; i < vv + vi; i ++) {
-        if(v[i] < 0)
+        if (votoLido < 0){
+            invalidoo++;
             continue;
-        else if(v[i] >= 0 && v[i] < 100)
-            vp[j++] = v[i];
-        else if(v[i] >= 100 && v[i] < 1000)
-            vs[k++] = v[i];
-        else if(v[i] >= 1000 && v[i] < 10000)
-            vdf[u++] = v[i];
-        else if(v[i] >= 10000 && v[i] < 100000)
-            vde[n++] = v[i];
+        }
+
+        switch (l){ // Quantidade de caracteres lidos(%n) salva nos vetores o voto do político como indice
+
+        case 3: // Presidente
+            pres[votoLido - 10].cargo = votoLido;
+            pres[votoLido - 10].voto++;
+            totalVotos++;
+            break;
+        case 4: //Senador
+            sen[votoLido - 100].cargo = votoLido;
+            sen[votoLido - 100].voto++;
+            break;
+        case 5: //Deputado Federal
+            fed[votoLido - 1000].cargo = votoLido;
+            fed[votoLido - 1000].voto++;
+            break;
+        default: //Deputado Estadual
+            est[votoLido - 10000].cargo = votoLido;
+            est[votoLido - 10000].voto++;
+        }
+        valido++;
     }
 
-    for(i = 0; i < j; i ++){
-        printf("%d", v[i]);
+    // Correcao para os índices corretos
+
+    for (i = 0; i < 91; i++){
+        if (pres[i].voto){
+            pres[quantPres++] = pres[i];
+        }   
     }
-    
-    free(v);
+        
+    for (i = 0; i < 901; i++){
+        if (sen[i].voto){
+            sen[quantSen++] = sen[i];
+        }     
+    }
+        
+    for (i = 0; i < 9001; i++){
+        if (fed[i].voto){
+            fed[quantDepFed++] = fed[i];
+        }  
+    }
+        
+    for (i = 0; i < 90001; i++){
+        if (est[i].voto){
+            est[quantDepEst++] = est[i];
+        }
+    }
+
+    printf("%d %d\n", valido, invalidoo);
+
+    quicksort(pres, 0, quantPres - 1);
+    quicksort(sen, 0, quantSen - 1);
+    quicksort(fed, 0, quantDepFed - 1);
+    quicksort(est, 0, quantDepEst - 1);
+
+    if ((double)pres[0].voto/totalVotos >= 0.51){//mais que 51% de votos totais
+        printf("%d\n", pres[0].cargo);
+    } else{
+        printf("Segundo turno\n");
+    }   
+
+    for (i = 0; i < senadores; i++){
+        printf("%d%c", sen[i].cargo, " \n"[i == senadores - 1]);
+    }
+        
+    for (i = 0; i < depFederais; i++){
+        printf("%d%c", fed[i].cargo, " \n"[i == depFederais - 1]);
+    }
+        
+    for (i = 0; i < depEstaduais; i++){
+        printf("%d%c", est[i].cargo, " \n"[i == depEstaduais - 1]);
+    }
+
     return 0;
+}
+
+//funcoes
+
+int separa(politico *lista, int l, int r)
+{
+    politico aux = lista[r];
+    int j = l,k;
+
+    for (k = l; k < r; k++){
+        if (less(lista[k], aux)){
+            exch(lista[k], lista[j]);
+            j++;
+        }
+    }
+    exch(lista[j], lista[r]);
+    
+    return j;
+}
+
+void quicksort(politico *lista, int l, int r){
+    
+    if (l >= r) return;//caso base
+
+    //calculo mediana
+    cmpexch(lista[(l + r) / 2], lista[r]);
+    cmpexch(lista[l], lista[(l + r) / 2]);
+    cmpexch(lista[r], lista[(l + r) / 2]);
+
+    int j = separa(lista, l, r);
+    quicksort(lista, l, j - 1);
+    quicksort(lista, j + 1, r);
 }
